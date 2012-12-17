@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context-3.1.xsd">
+
+    <context:component-scan base-package="org.broadleafcommerce.common.web"/>
+    <context:component-scan base-package="org.broadleafcommerce.core.web"/>
+    <context:component-scan base-package="org.broadleafcommerce.profile.web"/>
+    <context:component-scan base-package="com.bvb.ideal"/>
+    <!-- In order to use the pre-configured properties files, you should override this bean yourself in your own applicationContext.xml -->
+    <!--
+    <bean id="blConfiguration" class="org.broadleafcommerce.common.config.RuntimeEnvironmentPropertiesConfigurer">
+        <property name="propertyLocations">
+            <set>
+                <value>classpath:config/bc/ideal/</value>
+            </set>
+        </property>
+    </bean>
+    -->
+
+	<bean id="blIdealSecurity" class="com.bvb.ideal.security.util.IdealSecurityHelperImpl">
+		<constructor-arg value="SHA1withRSA"/> <!-- algorithm -->
+		<constructor-arg value="JKS"/> <!-- keyStoreType -->
+		<constructor-arg value="ideal1.jks"/> <!-- keyStoreName -->
+		<constructor-arg value="Password"/> <!-- keyStorePass -->
+		<constructor-arg value="com.bvb.ideal"/> <!-- keyAlias -->
+		<constructor-arg value="Password"/> <!-- privateKeyPass -->
+	</bean>
+
+<!-- <crypt:signerWithChooserByPrivateKeyId id="signer" privateKeyMap-ref="privateKeyMap"
+    	algorithm="SHA1withRSA" provider="BC"/>
+
+	<util:map id="privateKeyMap">
+    	<entry key="rabo">
+        	<crypt:privateKey keystore-ref="idealKeystore" alias="com.bvb.ideal"
+            	password="Password"/>
+    	</entry>
+	</util:map>
+
+	<crypt:keystore id="idealKeystore" location="classpath:keystore-ideal.jks"
+    	password="Password"/>
+-->
+    <bean id="blPayPalPaymentService" class="org.broadleafcommerce.core.payment.service.PaymentServiceImpl">
+        <property name="paymentModule" ref="blIdealModule"/>
+    </bean>
+    
+    <bean id="blIdealCheckoutService" class="com.bvb.ideal.service.payment.IdealCheckoutServiceImpl"/>
+    
+    <bean id="blCheckoutService" class="org.broadleafcommerce.core.checkout.service.CheckoutServiceImpl"/>
+
+    <bean id="blIdealModule" class="org.broadleafcommerce.payment.service.module.PayPalPaymentModule">
+        <property name="idealPaymentService" ref="blIdealVendorOrientedPaymentService"/>
+    </bean>
+
+<!-- <bean id="blPaymentService" class="org.broadleafcommerce.core.payment.service.PaymentServiceImpl">
+        <property name="paymentModule" ref="blIdealModule"/>
+    </bean>
+
+    <bean id="blIdealModule" class="com.bvb.payment.service.module.IdealPaymentModule">
+        <property name="idealPaymentService" ref="blIdealVendorOrientedPaymentService"/>
+    </bean>-->
+
+    <bean id="blIdealVendorOrientedPaymentService" class="com.bvb.ideal.service.payment.IdealPaymentServiceImpl">
+        <property name="serverUrl" value="${ideal.api.url}"/>
+        <property name="failureReportingThreshold" value="1"/>
+        <property name="requestGenerator">
+            <bean class="com.bvb.ideal.service.payment.IdealRequestGeneratorImpl">
+                <property name="libVersion" value="1.1.0"/>
+                <property name="merchantId" value="123456789"/>
+                <property name="subId" value="0"/>
+                <property name="returnUrl" value="http://localhost:8080/ideal/process"/>
+                <property name="cancelUrl" value="http://localhost:8080/cart"/>
+                <property name="authentication" value="SHA1_RSA"/>
+                <property name="contractBank" value="simulator"/>
+                <property name="bankUrl" value="https://www.ideal-simulator.nl/professional/"/> 
+                <property name="test" value="true"/>
+                
+                <!-- 0 : PayPal displays the shipping address passed in. -->
+                <!-- 1 : PayPal does not display the shipping fields at all. (Default) -->
+                <!-- 2 : PayPal will obtain the shipping address from the buyer's profile.-->
+<!--            <property name="shippingDisplayType" value="${paypal.shipping.display}"/>
+                <property name="additionalConfig">
+                    <map>
+                        <entry key="HDRIMG" value="${ideal.additional.HDRIMG}"/>
+                        <entry key="HDRBORDERCOLOR" value="${ideal.additional.HDRBORDERCOLOR}"/>
+                        <entry key="HDRBACKCOLOR" value="${paypal.additional.HDRBACKCOLOR}"/>
+                        <entry key="PAYFLOWCOLOR" value="${paypal.additional.PAYFLOWCOLOR}"/>
+                    </map>
+                </property>-->
+            </bean>
+        </property>
+        <property name="responseGenerator">
+            <bean class="com.bvb.ideal.service.payment.IdealResponseGeneratorImpl">
+                <property name="userRedirectUrl" value="${ideal.user.redirect.url}"/>
+            </bean>
+        </property>
+    </bean>
+</beans>

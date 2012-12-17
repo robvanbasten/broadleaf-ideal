@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:crypt="http://springcryptoutils.com/schema/crypt"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd
+			http://springcryptoutils.com/schema/crypt http://springcryptoutils.com/schema/crypt.xsd
+			http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.1.xsd">
+    <context:component-scan base-package="com.bvb.ideal"/>
+
+	<mvc:annotation-driven />
+    <!-- In order to use the pre-configured properties files, you should override this bean yourself in your own applicationContext.xml -->
+    
+    <bean id="blConfiguration" class="org.broadleafcommerce.common.config.RuntimeEnvironmentPropertiesConfigurer">
+        <property name="propertyLocations">
+            <set>
+                <value>classpath:config/bc/ideal/</value>
+            </set>
+        </property>
+    </bean>
+ 
+	<bean id="blIdealSecurity" class="com.bvb.ideal.security.util.IdealSecurityHelperImpl">
+		<constructor-arg value="${ideal.algorithm}"/> <!-- algorithm -->
+		<constructor-arg value="${ideal.keystore.type}"/> <!-- keyStoreType -->
+		<constructor-arg value="${ideal.keystore.name}"/> <!-- keyStoreName -->
+		<constructor-arg value="${ideal.keystore.pass}"/> <!-- keyStorePass -->
+		<constructor-arg value="${ideal.key.alias}"/> <!-- keyAlias -->
+		<constructor-arg value="${ideal.key.pass}"/> <!-- privateKeyPass -->
+		<constructor-arg value="${ideal.cert.alias}"/> <!-- certificateAlias -->
+	</bean>
+
+	<bean id="blIdealIssuerService" class="com.bvb.ideal.service.payment.IdealIssuerServiceImpl"/>
+
+
+    <bean id="blIdealVendorOrientedPaymentService" class="com.bvb.ideal.service.payment.IdealPaymentServiceImpl">
+        <property name="serverUrl" value="${ideal.api.url}"/>
+        <property name="failureReportingThreshold" value="1"/>
+        <property name="requestGenerator">
+            <bean class="com.bvb.ideal.service.payment.IdealRequestGeneratorImpl">
+                <property name="libVersion" value="${ideal.libVersion}"/>
+                <property name="merchantId" value="${ideal.merchantId}"/>
+                <property name="subId" value="${ideal.subId}"/>
+                <property name="returnUrl" value="${ideal.return.url}"/>
+                <property name="cancelUrl" value="${ideal.cancel.url}"/>
+                <property name="authentication" value="${ideal.authentication}"/>
+            </bean>
+        </property>
+        <property name="responseGenerator">
+            <bean class="com.bvb.ideal.service.payment.IdealResponseGeneratorImpl"/>
+        </property>
+    </bean>
+</beans>
